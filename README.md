@@ -1,1 +1,1 @@
-# go_project
+# go_distributed-queue
