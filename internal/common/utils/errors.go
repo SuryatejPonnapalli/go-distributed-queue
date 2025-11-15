@@ -27,7 +27,7 @@ var (
 		WriteError(c, http.StatusInternalServerError, "An unexpected error occured.")
 	}
 
-	Unathorized = func(c *gin.Context){
-		WriteError(c, http.StatusUnauthorized, "Unauthorized")
+	Unauthorized = func(c *gin.Context, message string){
+		WriteError(c, http.StatusUnauthorized, message)
 	}
 )
