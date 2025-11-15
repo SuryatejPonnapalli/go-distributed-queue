@@ -4,7 +4,7 @@ import (
 	"fmt"
 	"net/http"
 
-	"github.com/SuryatejPonnapalli/go_project/internal/common/utils"
+	"github.com/SuryatejPonnapalli/go-distributed-queue/internal/common/utils"
 	"github.com/gin-gonic/gin"
 )
 

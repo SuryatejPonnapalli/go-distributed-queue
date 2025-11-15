@@ -3,7 +3,7 @@ package users
 import (
 	"context"
 
-	db "github.com/SuryatejPonnapalli/go_project/internal/db/generated"
+	db "github.com/SuryatejPonnapalli/go-distributed-queue/internal/db/generated"
 	"github.com/jackc/pgx/v5/pgxpool"
 )
 type Repository struct{

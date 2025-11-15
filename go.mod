@@ -1,4 +1,4 @@
-module github.com/SuryatejPonnapalli/go_project
+module github.com/SuryatejPonnapalli/go-distributed-queue
 
 go 1.23.3
 

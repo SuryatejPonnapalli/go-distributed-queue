@@ -3,8 +3,8 @@ package main
 import (
 	"log"
 
-	common "github.com/SuryatejPonnapalli/go_project/internal/common"
-	"github.com/SuryatejPonnapalli/go_project/internal/users"
+	common "github.com/SuryatejPonnapalli/go-distributed-queue/internal/common"
+	"github.com/SuryatejPonnapalli/go-distributed-queue/internal/users"
 	"github.com/gin-gonic/gin"
 	"github.com/joho/godotenv"
 )
