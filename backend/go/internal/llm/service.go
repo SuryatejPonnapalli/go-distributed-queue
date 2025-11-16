@@ -6,6 +6,7 @@ import (
 	"fmt"
 
 	"github.com/SuryatejPonnapalli/go-distributed-queue/internal/common"
+	"github.com/SuryatejPonnapalli/go-distributed-queue/internal/llmclient"
 	"github.com/SuryatejPonnapalli/go-distributed-queue/internal/queue"
 	"golang.org/x/sync/singleflight"
 )
@@ -108,4 +109,20 @@ func (s *LLMService) FindSimilarPrompt(newVec []float64,threshold float64) (stri
     }
 
     return "", bestScore, nil
+}
+
+func (s *LLMService) GetPromptResponse(prompt string) (string, error){
+    key := "resp:" + prompt
+    
+    cached, err := common.Redis.Get(common.Ctx, key).Result()
+    if err == nil{
+        return cached, nil
+    }
+
+    resp, err := llmclient.GetResponse(prompt)
+    if err != nil{
+        return "", err
+    }
+
+    return resp, nil
 }

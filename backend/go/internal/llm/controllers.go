@@ -30,8 +30,10 @@ func (ctl *LLMController) EmbedHandler(c *gin.Context) {
 
     val, hit, _ := ctl.svc.CheckCache(prompt)
     if hit {
+        resp, _ := common.Redis.Get(common.Ctx, "resp:"+val).Result()
         c.JSON(http.StatusOK, gin.H{
             "status":   "cached_exact",
+            "response":   resp,
             "embedding": val,
         })
         return
