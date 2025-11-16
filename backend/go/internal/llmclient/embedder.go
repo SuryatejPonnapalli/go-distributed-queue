@@ -9,7 +9,6 @@ import (
 	"time"
 )
 
-var embedURL = os.Getenv("PYTHON_URL") + "/embed"
 
 var client = &http.Client{
 	Timeout: 10 * time.Second,
@@ -25,6 +24,7 @@ type embedResp struct {
 
 func GetEmbedding(prompt string) ([]float64, error){
 	body, _ := json.Marshal(embedReq{Text: prompt})
+	embedURL := os.Getenv("PYTHON_URL") + "/embed"
 
 	resp, err := client.Post(embedURL, "application/json", bytes.NewBuffer(body))
 	if err != nil{

@@ -3,9 +3,11 @@ package main
 import (
 	"fmt"
 	"log"
+	"os"
 
 	"github.com/SuryatejPonnapalli/go-distributed-queue/internal/common"
 	"github.com/SuryatejPonnapalli/go-distributed-queue/internal/queue"
+	"github.com/SuryatejPonnapalli/go-distributed-queue/internal/worker"
 	"github.com/joho/godotenv"
 )
 
@@ -15,6 +17,7 @@ func main() {
 	common.InitRedis()
 
 	fmt.Println("Worker started... listening for jobs.")
+	fmt.Println("PYTHON_URL =", os.Getenv("PYTHON_URL"))
 
 	for {
 		job, err := queue.PopEmbedJob()
@@ -23,6 +26,6 @@ func main() {
 			continue
 		}
 
-		fmt.Println("Processing job:", job.ID, "→", job.Prompt)
+		worker.ProcessEmbedJob(job)
 	}
 }
