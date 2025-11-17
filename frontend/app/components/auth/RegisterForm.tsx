@@ -2,14 +2,39 @@ import { useState } from "react";
 import { Card } from "../ui/card";
 import { Button } from "../ui/button";
 import { Link } from "react-router";
+import { postRequest } from "~/utils/api/post";
+import { useNavigate } from "react-router";
 
 export function RegisterForm() {
   const [email, setEmail] = useState("");
   const [password, setPassword] = useState("");
   const [isLoading, setIsLoading] = useState(false);
   const [error, setError] = useState("");
+  const navigate = useNavigate();
 
-  const handleSubmit = async (e: React.FormEvent) => {};
+  const handleSubmit = async (e: React.FormEvent) => {
+    e.preventDefault();
+    setError("");
+    setIsLoading(true);
+
+    if (password.length < 6) {
+      setError("Password must be at least 6 characters");
+      setIsLoading(false);
+      return;
+    }
+
+    const body = { email: email, password: password };
+    const res = await postRequest("users/register", body);
+
+    if (res.status == 201) {
+      setIsLoading(false);
+      navigate("/");
+    }
+    if (res.status != 202) {
+      setError(res.data.message || "User already exists");
+      setIsLoading(false);
+    }
+  };
 
   return (
     <Card className="p-8 shadow-lg">

@@ -2,24 +2,36 @@ import { useState } from "react";
 import { Button } from "../ui/button";
 import { Card } from "../ui/card";
 import { Link } from "react-router";
+import { postRequest } from "~/utils/api/post";
+import { useNavigate } from "react-router";
 
 export function LoginForm() {
   const [email, setEmail] = useState("");
   const [password, setPassword] = useState("");
   const [isLoading, setIsLoading] = useState(false);
   const [error, setError] = useState("");
+  const navigate = useNavigate();
 
   const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
     setError("");
     setIsLoading(true);
 
-    try {
-      // Example: Show success message or redirect
-      alert("Login successful!");
-    } catch (err) {
-      setError("Failed to login. Please try again.");
-    } finally {
+    if (password.length < 6) {
+      setError("Password must be at least 6 characters");
+      setIsLoading(false);
+      return;
+    }
+
+    const body = { email: email, password: password };
+    const res = await postRequest("users/login", body);
+
+    if (res.status == 202) {
+      setIsLoading(false);
+      navigate("/chat");
+    }
+    if (res.status != 202) {
+      setError(res.data.message || "Something went wrong");
       setIsLoading(false);
     }
   };
@@ -27,7 +39,6 @@ export function LoginForm() {
   return (
     <Card className="p-8 shadow-lg">
       <div className="space-y-6">
-        {/* Header */}
         <div className="space-y-2 text-center">
           <h1 className="text-3xl font-bold text-foreground">Welcome Back</h1>
           <p className="text-muted-foreground">
@@ -66,6 +77,7 @@ export function LoginForm() {
               type="password"
               placeholder="••••••••"
               value={password}
+              minLength={6}
               onChange={(e) => setPassword(e.target.value)}
               required
               className="w-full px-4 py-2 border border-input rounded-md bg-background text-foreground placeholder-muted-foreground focus:outline-none focus:ring-2 focus:ring-primary transition-colors"
