@@ -4,6 +4,7 @@ import (
 	"encoding/json"
 	"fmt"
 	"log"
+	"time"
 
 	"github.com/SuryatejPonnapalli/go-distributed-queue/internal/common"
 	"github.com/SuryatejPonnapalli/go-distributed-queue/internal/llmclient"
@@ -13,7 +14,16 @@ import (
 func ProcessEmbedJob(job queue.EmbedJob){
 	vector, err := llmclient.GetEmbedding(job.Prompt)
 	fmt.Println("Worker:", job.Prompt, len(vector), vector[:5])
+
+	common.Redis.HSet(common.Ctx, "job:"+job.ID, "status", "embedding")
+
 	if err != nil {
+		common.Redis.HSet(common.Ctx, "job:"+job.ID, map[string]interface{}{
+			"status": "error",
+			"error": err.Error(),
+			"updated_at": time.Now().String(),
+		})
+		
 		log.Println("embedding failed:", err)
 		return
 	}

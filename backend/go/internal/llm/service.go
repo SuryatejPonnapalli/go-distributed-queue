@@ -113,7 +113,7 @@ func (s *LLMService) FindSimilarPrompt(newVec []float64,threshold float64) (stri
 
 func (s *LLMService) GetPromptResponse(prompt string) (string, error){
     key := "resp:" + prompt
-    
+
     cached, err := common.Redis.Get(common.Ctx, key).Result()
     if err == nil{
         return cached, nil
@@ -124,5 +124,23 @@ func (s *LLMService) GetPromptResponse(prompt string) (string, error){
         return "", err
     }
 
+    err = common.Redis.Set(common.Ctx, key, resp, 0).Err()
+    if err != nil{
+        return "", err
+    }
+
     return resp, nil
 }
+
+func (s *LLMService) GetJobStatus(id string) (any, error){
+    data, err := common.Redis.HGetAll(common.Ctx, "job:"+id).Result()
+    if err != nil{
+        return nil, err
+    }
+
+    if len(data) == 0 {
+        return nil, errors.New("job not found")
+    }
+
+    return data, nil
+} 

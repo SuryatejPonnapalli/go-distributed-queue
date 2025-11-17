@@ -18,6 +18,10 @@ func NewLLMController(svc *LLMService) *LLMController {
     return &LLMController{svc}
 }
 
+func NormalizePrompt(p string) string {
+    return strings.ToLower(strings.TrimSpace(p))
+}
+
 func (ctl *LLMController) EmbedHandler(c *gin.Context) {
     var req EmbedRequest
 
@@ -26,15 +30,14 @@ func (ctl *LLMController) EmbedHandler(c *gin.Context) {
         return
     }
 
-    prompt := strings.ToLower(strings.TrimSpace(req.Prompt))
+    prompt := NormalizePrompt(req.Prompt)
 
-    val, hit, _ := ctl.svc.CheckCache(prompt)
+    _, hit, _ := ctl.svc.CheckCache(prompt)
     if hit {
-        resp, _ := common.Redis.Get(common.Ctx, "resp:"+val).Result()
+        resp, _ := common.Redis.Get(common.Ctx, "resp:"+prompt).Result()
         c.JSON(http.StatusOK, gin.H{
             "status":   "cached_exact",
             "response":   resp,
-            "embedding": val,
         })
         return
     }
@@ -51,7 +54,6 @@ func (ctl *LLMController) EmbedHandler(c *gin.Context) {
     if key != ""{
         basePrompt := strings.TrimPrefix(key, "embed:")
         resp, _ := common.Redis.Get(common.Ctx, "resp:"+basePrompt).Result()
-
         c.JSON(http.StatusOK, gin.H{
             "status":     "semantic_reuse",
             "response":   resp,
@@ -66,5 +68,17 @@ func (ctl *LLMController) EmbedHandler(c *gin.Context) {
         return
     }
 
-    c.JSON(200, gin.H{"status": "miss", "result": result})
+    c.JSON(200, gin.H{"status": "queued", "jobID": result})
+}
+
+func (ctl *LLMController) JobStatus(c *gin.Context){
+    id := c.Param("id")
+
+    data, err := ctl.svc.GetJobStatus(id)
+    if err!= nil{
+        c.JSON(500, gin.H{"error": err.Error()})
+        return
+    }
+
+    c.JSON(200, gin.H{"data": data})
 }

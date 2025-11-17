@@ -2,6 +2,7 @@ package queue
 
 import (
 	"encoding/json"
+	"time"
 
 	"github.com/SuryatejPonnapalli/go-distributed-queue/internal/common"
 	"github.com/google/uuid"
@@ -17,6 +18,17 @@ func PushEmbedJob(prompt string) (string, error){
 		ID: uuid.New().String(),
 		Prompt: prompt,
 	}
+
+	jobKey := "job:"+job.ID
+	common.Redis.HSet(common.Ctx, jobKey, map[string]interface{}{
+        "id": job.ID,
+        "prompt": prompt,
+        "status": "queued",
+        "response": "",
+        "error": "",
+        "created_at": time.Now().String(),
+        "updated_at": time.Now().String(),
+    })
 
 	data, _ := json.Marshal(job)
 
