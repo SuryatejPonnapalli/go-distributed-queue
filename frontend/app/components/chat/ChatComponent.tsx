@@ -17,43 +17,10 @@ const SAMPLE_CONVERSATIONS: Message[] = [
     id: "1",
     text: "Hello! How can I help you today?",
     sender: "bot",
-    timestamp: "10:00 AM",
-  },
-  {
-    id: "2",
-    text: "Hi! I'd like to know more about your services.",
-    sender: "user",
-    timestamp: "10:01 AM",
-  },
-  {
-    id: "3",
-    text: "Of course! We offer a wide range of services including web development, mobile apps, and AI solutions. What interests you most?",
-    sender: "bot",
-    timestamp: "10:01 AM",
-  },
-  {
-    id: "4",
-    text: "Tell me about your web development services.",
-    sender: "user",
-    timestamp: "10:02 AM",
-  },
-  {
-    id: "5",
-    text: "We specialize in building modern, responsive web applications using React, Next.js, and Tailwind CSS. We can help you create everything from landing pages to complex full-stack applications.",
-    sender: "bot",
-    timestamp: "10:03 AM",
-  },
-  {
-    id: "6",
-    text: "That sounds great! Do you have any portfolio examples?",
-    sender: "user",
-    timestamp: "10:04 AM",
-  },
-  {
-    id: "7",
-    text: "Yes! We have built projects across various industries. I can share our portfolio with you. Would you like me to send you some examples?",
-    sender: "bot",
-    timestamp: "10:05 AM",
+    timestamp: new Date().toLocaleTimeString([], {
+      hour: "2-digit",
+      minute: "2-digit",
+    }),
   },
 ];
 

@@ -15,7 +15,7 @@ func AuthMiddleware() gin.HandlerFunc{
 		var token string
 
 		cookieToken, err := c.Cookie("token")
-		if err != nil && cookieToken != ""{
+		if err == nil && cookieToken != ""{
 			token = cookieToken
 		}
 

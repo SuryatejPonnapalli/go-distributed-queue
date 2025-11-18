@@ -47,7 +47,8 @@ func main() {
 	//routes
 	api := server.Group("/api/v1")
 	users.RegisterUserRoutes(api.Group("/users"), userController)
-	llm.RegisterLLMRoutes(api.Group("/llm"), llmController)
+	llmGroup := api.Group("/llm", users.AuthMiddleware())
+	llm.RegisterLLMRoutes(llmGroup, llmController)
 
 
 	server.Run(":8000")
