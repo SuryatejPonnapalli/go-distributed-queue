@@ -31,8 +31,19 @@ func (ctl *LLMController) EmbedHandler(c *gin.Context) {
     }
 
     prompt := NormalizePrompt(req.Prompt)
+    log.Println("PROMPT:", prompt)
 
-    _, hit, _ := ctl.svc.CheckCache(prompt)
+    respKey := "resp:" + prompt
+    respVal, err := common.Redis.Get(common.Ctx, respKey).Result()
+    if err == nil {
+        c.JSON(200, gin.H{
+        "status":   "cached_exact",
+        "response": respVal,
+        })
+        return
+    }
+
+    _, hit, _ := ctl.svc.CheckEmbeddingCache(prompt)
     if hit {
         resp, _ := common.Redis.Get(common.Ctx, "resp:"+prompt).Result()
         c.JSON(http.StatusOK, gin.H{

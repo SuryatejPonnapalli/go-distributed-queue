@@ -2,10 +2,11 @@ package llmclient
 
 import (
 	"bytes"
+	"context"
 	"encoding/json"
-	"errors"
 	"net/http"
 	"os"
+	"time"
 )
 
 
@@ -21,18 +22,25 @@ type embedResp struct {
 }
 
 func GetEmbedding(prompt string) ([]float64, error){
+	llmLimit <- struct{}{}       
+	defer func() { <-llmLimit }()
+
+	ctx, cancel := context.WithTimeout(context.Background(), 50*time.Second)
+	defer cancel()
+
 	body, _ := json.Marshal(embedReq{Text: prompt})
 	embedURL := os.Getenv("PYTHON_URL") + "/embed"
 
-	resp, err := client.Post(embedURL, "application/json", bytes.NewBuffer(body))
-	if err != nil{
-		return nil,err
+	req, err := http.NewRequestWithContext(ctx, "POST", embedURL, bytes.NewBuffer(body))
+	if err != nil {
+		return nil, err
+	}
+
+	resp, err := client.Do(req)
+	if err != nil {
+		return nil, err
 	}
 	defer resp.Body.Close()
-
-	if resp.StatusCode != 200{
-		return nil, errors.New("embedder error: non-200 response")
-	}
 
 	var out embedResp
 	err = json.NewDecoder(resp.Body).Decode(&out)

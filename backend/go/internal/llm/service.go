@@ -21,7 +21,7 @@ func NewLLMService() *LLMService {
     }
 }
 
-func (s *LLMService) CheckCache(prompt string) (string, bool, error) {
+func (s *LLMService) CheckEmbeddingCache(prompt string) (string, bool, error) {
     if prompt == "" {
         return "", false, errors.New("prompt is empty")
     }
@@ -38,7 +38,7 @@ func (s *LLMService) CheckCache(prompt string) (string, bool, error) {
 
 func (s *LLMService) FetchOrQueue(prompt string)(string, error){
     result, err, _ := s.group.Do(prompt, func() (interface{}, error) {
-        val, hit, _ := s.CheckCache(prompt)
+        val, hit, _ := s.CheckEmbeddingCache(prompt)
         if hit{
             return val, nil
         }

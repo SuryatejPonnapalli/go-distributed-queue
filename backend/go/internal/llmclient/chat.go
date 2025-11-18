@@ -2,9 +2,11 @@ package llmclient
 
 import (
 	"bytes"
+	"context"
 	"encoding/json"
-	"errors"
+	"net/http"
 	"os"
+	"time"
 )
 
 
@@ -17,18 +19,26 @@ type chatResp struct{
 }
 
 func GetResponse(prompt string) (string, error){
+	llmLimit <- struct{}{}       
+	defer func() { <-llmLimit }()
+
+	ctx, cancel := context.WithTimeout(context.Background(), 50*time.Second)
+	defer cancel()
+
+
 	body, _ := json.Marshal(chatReq{Text: prompt})
 	chatUrl := os.Getenv("PYTHON_URL") + "/chat"
 
-	resp, err := client.Post(chatUrl, "application/json", bytes.NewBuffer(body))
-	if err != nil{
+	req, err := http.NewRequestWithContext(ctx, "POST", chatUrl, bytes.NewBuffer(body))
+	if err != nil {
+		return "", err
+	}
+
+	resp, err := client.Do(req)
+	if err != nil {
 		return "", err
 	}
 	defer resp.Body.Close()
-
-	if resp.StatusCode != 200 {
-		return "", errors.New("llm error: non-200 response")
-	}
 
 	var out chatResp
 	err = json.NewDecoder(resp.Body).Decode(&out)

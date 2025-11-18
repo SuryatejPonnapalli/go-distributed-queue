@@ -30,6 +30,8 @@ func PushEmbedJob(prompt string) (string, error){
         "updated_at": time.Now().String(),
     })
 
+	common.Redis.Expire(common.Ctx, jobKey, 3*time.Hour)
+
 	data, _ := json.Marshal(job)
 
 	err := common.Redis.LPush(common.Ctx, "embed_jobs", data).Err()
@@ -50,4 +52,30 @@ func PopEmbedJob() (EmbedJob, error) {
 	json.Unmarshal([]byte(result[1]), &job)
 
 	return job, nil
+}
+
+func PushChatJob(prompt string) (string, error) {
+    job := EmbedJob{
+        ID: uuid.New().String(),
+        Prompt: prompt,
+    }
+
+    data, _ := json.Marshal(job)
+    err := common.Redis.LPush(common.Ctx, "chat_jobs", data).Err()
+    if err != nil {
+        return "", err
+    }
+
+    return job.ID, nil
+}
+
+func PopChatJob() (EmbedJob, error) {
+    res, err := common.Redis.BRPop(common.Ctx, 0, "chat_jobs").Result()
+    if err != nil {
+        return EmbedJob{}, err
+    }
+
+    var job EmbedJob
+    json.Unmarshal([]byte(res[1]), &job)
+    return job, nil
 }

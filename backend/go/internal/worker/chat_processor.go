@@ -2,6 +2,7 @@ package worker
 
 import (
 	"log"
+	"strings"
 	"time"
 
 	"github.com/SuryatejPonnapalli/go-distributed-queue/internal/common"
@@ -12,14 +13,24 @@ import (
 func ProcessChatJob(job queue.EmbedJob, svc *llm.LLMService){
 	log.Println("ChatJob started for:", job.Prompt)
 
+	normalized := strings.ToLower(strings.TrimSpace(job.Prompt))
+
+	key := "resp:" + normalized
+    existingResp, err := common.Redis.Get(common.Ctx, key).Result()
+    if err == nil && existingResp != "" {
+        log.Println("Skipping ChatJob — response already exists for:", normalized)
+        return
+    }
+
+
 	common.Redis.HSet(common.Ctx, "job:"+job.ID, map[string]interface{}{
 		"status":  "chatting",
 		"prompt":  job.Prompt,
 		"updated_at": time.Now().String(),
 	})
-	
+	common.Redis.Expire(common.Ctx, "job:"+job.ID, 3*time.Hour)
 
-	resp, err := svc.GetPromptResponse(job.Prompt)
+	resp, err := svc.GetPromptResponse(normalized)
 	if err != nil {
 		log.Println("chat failed:", err)
 
@@ -28,13 +39,13 @@ func ProcessChatJob(job queue.EmbedJob, svc *llm.LLMService){
 			"error": err.Error(),
 			"updated_at": time.Now().String(),
 		})
+		common.Redis.Expire(common.Ctx, "job:"+job.ID, 3*time.Hour)
 		
 		return
 	}
 
-	key := "resp:" + job.Prompt
 
-	if err := common.Redis.Set(common.Ctx, key, resp, 0).Err(); err != nil {
+	if err := common.Redis.Set(common.Ctx, key, resp, 24*7*time.Hour).Err(); err != nil {
         log.Println("redis store error:", err)
         return
     }
@@ -46,6 +57,7 @@ func ProcessChatJob(job queue.EmbedJob, svc *llm.LLMService){
 		"response": resp,
 		"updated_at": time.Now().String(),
 	})
+	common.Redis.Expire(common.Ctx, "job:"+job.ID, 3*time.Hour)
 	
 
 }
