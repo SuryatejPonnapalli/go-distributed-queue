@@ -2,6 +2,8 @@ import { useState } from "react";
 import { Button } from "../ui/button";
 import { Input } from "../ui/input";
 import { Send } from "lucide-react";
+import { postRequest } from "~/utils/api/post";
+import { getRequest } from "~/utils/api/get";
 
 interface Message {
   id: string;
@@ -58,9 +60,14 @@ const SAMPLE_CONVERSATIONS: Message[] = [
 export function ChatInterface() {
   const [messages, setMessages] = useState<Message[]>(SAMPLE_CONVERSATIONS);
   const [input, setInput] = useState("");
+  const [loading, setLoading] = useState(false);
+  const [errorMsg, setErrorMsg] = useState("");
 
-  const handleSend = () => {
-    if (!input.trim()) return;
+  const handleSend = async () => {
+    if (!input.trim()) {
+      setErrorMsg("Enter a prompt");
+      return;
+    }
 
     const userMessage: Message = {
       id: Date.now().toString(),
@@ -72,25 +79,89 @@ export function ChatInterface() {
       }),
     };
 
-    setMessages([...messages, userMessage]);
+    setMessages((prev) => [...prev, userMessage]);
     setInput("");
+    setLoading(true);
 
-    // Simulate bot response
-    setTimeout(() => {
-      const botMessage: Message = {
-        id: (Date.now() + 1).toString(),
-        text:
-          'Thanks for your message! I understand you said: "' +
-          input +
-          '". How else can I help?',
-        sender: "bot",
-        timestamp: new Date().toLocaleTimeString([], {
-          hour: "2-digit",
-          minute: "2-digit",
-        }),
-      };
-      setMessages((prev) => [...prev, botMessage]);
-    }, 500);
+    try {
+      const res = await postRequest("llm/embed", { prompt: input });
+
+      if (res.status !== 200) {
+        setErrorMsg("Failed to send prompt");
+        setLoading(false);
+        return;
+      }
+
+      if (
+        res.data.status == "cached_exact" ||
+        res.data.status == "semantic_reuse"
+      ) {
+        const botMessage: Message = {
+          id: (Date.now() + 1).toString(),
+          text: res.data.response,
+          sender: "bot",
+          timestamp: new Date().toLocaleTimeString([], {
+            hour: "2-digit",
+            minute: "2-digit",
+          }),
+        };
+        setMessages((prev) => [...prev, botMessage]);
+        return;
+      }
+
+      const jobID = res.data.jobID;
+
+      // -----------------------------
+      // POLLING LOOP WITH TIMEOUT
+      // -----------------------------
+      const timeoutMs = 50000; // 20 sec timeout
+      const intervalMs = 1000; // poll every 1 sec
+      const start = Date.now();
+
+      let jobData = null;
+
+      while (Date.now() - start < timeoutMs) {
+        const poll = await getRequest(`llm/jobs/${jobID}`);
+        jobData = poll.data;
+        console.log("job", jobData);
+
+        if (jobData.data.status === "done") break;
+        if (jobData.data.status === "error") break;
+
+        // still embedding or chatting
+        await new Promise((r) => setTimeout(r, intervalMs));
+      }
+
+      setLoading(false);
+
+      if (!jobData) {
+        setErrorMsg("Request timed out. Try again.");
+        return;
+      }
+
+      if (jobData.status === "error") {
+        setErrorMsg(jobData.error || "Something went wrong");
+        return;
+      }
+
+      if (jobData.data.status === "done") {
+        const botMessage: Message = {
+          id: (Date.now() + 1).toString(),
+          text: jobData.data.response,
+          sender: "bot",
+          timestamp: new Date().toLocaleTimeString([], {
+            hour: "2-digit",
+            minute: "2-digit",
+          }),
+        };
+
+        setMessages((prev) => [...prev, botMessage]);
+      }
+    } catch (err) {
+      setErrorMsg("Network error");
+    } finally {
+      setLoading(false);
+    }
   };
 
   return (

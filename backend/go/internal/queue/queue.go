@@ -13,6 +13,11 @@ type EmbedJob struct {
 	Prompt string `json:"prompt"`
 }
 
+type ChatJob struct {
+    ID     string `json:"id"`
+    Prompt string `json:"prompt"`
+}
+
 func PushEmbedJob(prompt string) (string, error){
 	job := EmbedJob{
 		ID: uuid.New().String(),
@@ -54,9 +59,9 @@ func PopEmbedJob() (EmbedJob, error) {
 	return job, nil
 }
 
-func PushChatJob(prompt string) (string, error) {
-    job := EmbedJob{
-        ID: uuid.New().String(),
+func PushChatJob(id string, prompt string) (string, error) {
+    job := ChatJob{
+        ID:     id,
         Prompt: prompt,
     }
 
@@ -69,13 +74,14 @@ func PushChatJob(prompt string) (string, error) {
     return job.ID, nil
 }
 
-func PopChatJob() (EmbedJob, error) {
+
+func PopChatJob() (ChatJob, error) {
     res, err := common.Redis.BRPop(common.Ctx, 0, "chat_jobs").Result()
     if err != nil {
-        return EmbedJob{}, err
+        return ChatJob{}, err
     }
 
-    var job EmbedJob
+    var job ChatJob
     json.Unmarshal([]byte(res[1]), &job)
     return job, nil
 }

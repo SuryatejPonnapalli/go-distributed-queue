@@ -12,6 +12,7 @@ import (
 	"github.com/SuryatejPonnapalli/go-distributed-queue/internal/queue"
 )
 
+
 func ProcessEmbedJob(job queue.EmbedJob){
 	normalized := strings.ToLower(strings.TrimSpace(job.Prompt))
 
@@ -43,5 +44,5 @@ func ProcessEmbedJob(job queue.EmbedJob){
 	}
 
 	log.Println("Stored embedding:", key)
-	queue.PushChatJob(normalized)
+	queue.PushChatJob(job.ID,normalized)
 }
