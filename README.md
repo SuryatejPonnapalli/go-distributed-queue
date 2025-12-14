@@ -1,4 +1,4 @@
-# Go LLM Concurrency & Semantic Caching System
+# Go LLM Semantic Caching System
 
 A high-performance LLM backend architecture using Go, Redis, Python FastAPI, embeddings, and concurrency deduplication.
 
